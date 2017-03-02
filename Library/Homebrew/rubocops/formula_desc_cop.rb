@@ -1,12 +1,20 @@
+require_relative "./extend/formula_cop"
+require_relative "../extend/string"
+
 module RuboCop
   module Cop
     module Homebrew
-      class FormulaDesc < Cop
-        def on_class(node)
-          class_node, parent_class_node, body = *node
-          formula_name = class_node.const_name
-          return unless parent_class_node && parent_class_node.const_name == "Formula" && body
-          check(node, body, formula_name)
+      # This cop audits `desc` in Formulae
+      #
+      # - Checks for existence of `desc`
+      # - Checks if size of `desc` > 80
+      # - Checks if `desc` begins with an article
+      # - Checks for correct usage of `command-line` in `desc`
+      # - Checks if `desc` contains the formula name
+
+      class FormulaDesc < FormulaCop
+        def on_formula(node, class_node, _parent_class_node, body)
+          check(node, body, class_node.const_name)
         end
 
         private
@@ -14,7 +22,7 @@ module RuboCop
         def check(node, body, formula_name)
           body.each_child_node(:send) do |call_node|
             _receiver, call_name, args = *call_node
-            next unless call_name == :desc && !args.children[0].empty?
+            next if call_name != :desc || args.children[0].empty?
             description = args.children[0]
 
             source_buffer = call_node.source_range.source_buffer
@@ -27,14 +35,14 @@ module RuboCop
               column = desc_begin_pos - line_begin_pos
               length = call_node.children[2].source_range.size
               sourcerange = source_range(source_buffer, line_number, column, length)
-              message = <<-EOS.strip_indent
-                        Description is too long. \"name: desc\" should be less than 80 characters.
-                        Length is calculated as #{formula_name} + desc. (currently #{linelength})
-                        EOS
+              message = <<-EOS.undent
+                Description is too long. "name: desc" should be less than 80 characters.
+                Length is calculated as #{formula_name} + desc. (currently #{linelength})
+              EOS
               add_offense(call_node, sourcerange, message)
             end
 
-            match_object = description.match(/([Cc]ommand ?line)/)
+            match_object = description.match(/(command ?line)/i)
             if match_object
               column = desc_begin_pos+match_object.begin(0)-line_begin_pos+1
               length = match_object.to_s.length
@@ -42,7 +50,7 @@ module RuboCop
               add_offense(call_node, sourcerange, "Description should use \"command-line\" instead of \"#{match_object}\"")
             end
 
-            match_object = description.match(/^([Aa]n?)\s/)
+            match_object = description.match(/^(an?)\s/i)
             if match_object
               column = desc_begin_pos+match_object.begin(0)-line_begin_pos+1
               length = match_object.to_s.length
@@ -57,7 +65,7 @@ module RuboCop
               sourcerange = source_range(source_buffer, line_number, column, length)
               add_offense(call_node, sourcerange, "Description shouldn't include the formula name")
             end
-            return
+            return nil
           end
           add_offense(node, node.source_range, "Formula should have a desc (Description).")
         end

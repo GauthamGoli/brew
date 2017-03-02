@@ -1,19 +1,30 @@
+require_relative "./extend/formula_cop"
+
 module RuboCop
   module Cop
     module Homebrew
-      class CorrectBottleBlock < Cop
+      # This cop audits `bottle` block in Formulae
+      #
+      # - `rebuild` should be used instead of `revision` in `bottle` block
+
+      class CorrectBottleBlock < FormulaCop
         MSG = "Use rebuild instead of revision in bottle block".freeze
 
-        def on_block(node)
-          return if block_length(node).zero?
-          method, _args, body = *node
-          _keyword, method_name = *method
-
-          return unless method_name == :bottle
-          check_revision?(body)
+        def on_formula(_node, _class_node, _parent_class_node, body)
+          check(body)
         end
 
         private
+
+        def check(body)
+          body.each_child_node(:block) do |block_node|
+            next if block_length(block_node).zero?
+            method, _args, block_body = *block_node
+            _keyword, method_name = *method
+            next unless method_name == :bottle
+            check_revision?(block_body)
+          end
+        end
 
         def autocorrect(node)
           lambda do |corrector|
