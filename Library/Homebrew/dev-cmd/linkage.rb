@@ -20,14 +20,18 @@ require "cli_parser"
 module Homebrew
   module_function
 
-  def linkage
-    Homebrew::CLI::Parser.parse do
+  def linkage_args
+    Homebrew::CLI::Parser.new do
       switch "--test"
       switch "--reverse"
       switch "--cached"
       switch :verbose
       switch :debug
     end
+  end
+
+  def linkage
+    linkage_args.parse
 
     CacheStoreDatabase.use(:linkage) do |db|
       ARGV.kegs.each do |keg|
