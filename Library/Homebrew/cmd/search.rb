@@ -41,20 +41,40 @@ module Homebrew
     },
   }.freeze
 
-  def search(argv = ARGV)
-    CLI::Parser.parse(argv) do
-      switch "--desc"
+  def search_args
+    Homebrew::CLI::Parser.new do
+      usage_banner <<~EOS
+        `search`, `-S` [<options>] [<text>]
+
+        Display all locally available formulae (including tapped ones).
+        No online search is performed if no additional options are provided.
+
+        If <text> is provided, perform a substring search of cask tokens and
+        formula names for <text>. If <text> is surrounded with slashes, then
+        it is interpreted as a regular expression. The search for <text> is
+        extended online to official taps.
+      EOS
+      switch "--casks",
+        description: "Display all locally available casks (including tapped ones). "\
+                     "No online search is performed."
+      flag "--desc=",
+        description: "Search formulae with a description matching <text> and casks "\
+                     "with a name matching <text>."
 
       package_manager_switches = PACKAGE_MANAGERS.keys.map { |name| "--#{name}" }
 
       package_manager_switches.each do |s|
-        switch s
+        switch s,
+          description: "Search for <text> in the given package manager's list."
       end
-
-      switch "--casks"
-
       conflicts(*package_manager_switches)
+      switch :verbose
+      switch :debug
     end
+  end
+
+  def search
+    search_args.parse
 
     if package_manager = PACKAGE_MANAGERS.find { |name,| args[:"#{name}?"] }
       _, url = package_manager
