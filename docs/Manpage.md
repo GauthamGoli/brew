@@ -1868,6 +1868,9 @@ example, run `export HOMEBREW_NO_INSECURE_REDIRECT=1` rather than just
 
   *Default:* The number of available CPU cores.
 
+- `HOMEBREW_MULTI_USER`
+  <br>If set, enable multi-user support. Allows users belonging to `admin` group to install formulae.
+
 - `HOMEBREW_NO_ANALYTICS`
   <br>If set, do not send analytics. For more information, see: <https://docs.brew.sh/Analytics>
 

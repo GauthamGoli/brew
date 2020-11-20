@@ -8237,6 +8237,8 @@ module Homebrew::EnvConfig
 
   def self.logs(); end
 
+  def self.multi_user?(); end
+
   def self.no_analytics?(); end
 
   def self.no_auto_update?(); end

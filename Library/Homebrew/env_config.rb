@@ -214,6 +214,11 @@ module Homebrew
           Hardware::CPU.cores
         },
       },
+      HOMEBREW_MULTI_USER:                    {
+        description: "If set, enable multi-user support. Allows users belonging to `admin` group to " \
+                     "install formulae.",
+        boolean:     true,
+      },
       HOMEBREW_NO_ANALYTICS:                  {
         description: "If set, do not send analytics. For more information, see: <https://docs.brew.sh/Analytics>",
         boolean:     true,

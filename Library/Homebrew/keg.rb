@@ -102,15 +102,21 @@ class Keg
   MUST_EXIST_DIRECTORIES = (MUST_EXIST_SUBDIRECTORIES + [
     HOMEBREW_CELLAR,
   ].sort.uniq).freeze
+
+  ZSH_DIRECTORIES = if Homebrew::EnvConfig.multi_user?
+    []
+  else
+    %w[share/zsh share/zsh/site-functions].map { |dir| HOMEBREW_PREFIX/dir }
+  end.freeze
+
   MUST_BE_WRITABLE_DIRECTORIES = (
     %w[
       etc/bash_completion.d lib/pkgconfig
       share/aclocal share/doc share/info share/locale share/man
       share/man/man1 share/man/man2 share/man/man3 share/man/man4
       share/man/man5 share/man/man6 share/man/man7 share/man/man8
-      share/zsh share/zsh/site-functions
       var/log
-    ].map { |dir| HOMEBREW_PREFIX/dir } + MUST_EXIST_SUBDIRECTORIES + [
+    ].map { |dir| HOMEBREW_PREFIX/dir } + MUST_EXIST_SUBDIRECTORIES + ZSH_DIRECTORIES + [
       HOMEBREW_CACHE,
       HOMEBREW_CELLAR,
       HOMEBREW_LOCKS,
