@@ -354,10 +354,16 @@ module Homebrew
         EOS
       end
 
+      def writable_group?(path)
+        path.grpowned? && (("%o" % File.stat(path).mode).to_i(8) & 00020) == 16
+      end
+
       def check_access_directories
         not_writable_dirs =
           Keg::MUST_BE_WRITABLE_DIRECTORIES.select(&:exist?)
                                            .reject(&:writable_real?)
+        # if multi-user support is on
+        not_writable_dirs = not_writable_dirs.reject(&:writable_group?)
         return if not_writable_dirs.empty?
 
         <<~EOS

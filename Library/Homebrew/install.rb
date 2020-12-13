@@ -63,7 +63,7 @@ module Homebrew
     def attempt_directory_creation
       Keg::MUST_EXIST_DIRECTORIES.each do |dir|
         FileUtils.mkdir_p(dir) unless dir.exist?
-
+        FileUtils.chmod "g+w", dir.to_s, :verbose => true
         # Create these files to ensure that these directories aren't removed
         # by the Catalina installer.
         # (https://github.com/Homebrew/brew/issues/6263)

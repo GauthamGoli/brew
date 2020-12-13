@@ -116,6 +116,8 @@ class Pathname
     return unless dst
 
     mkpath
+    # if multi user is on bitch
+    make_group_writable
 
     # Use FileUtils.mv over File.rename to handle filesystem boundaries. If src
     # is a symlink, and its target is moved first, FileUtils.mv will fail:
@@ -128,6 +130,18 @@ class Pathname
     end
   end
   private :install_p
+
+  def make_group_writable(dst = self)
+    if dst.file?
+      dst_dir = dst.dirname
+    else
+      dst_dir = dst
+    end
+    if Keg::MUST_BE_WRITABLE_DIRECTORIES.include?(dst_dir)
+      FileUtils.chmod "g+w", dst_dir.to_s, :verbose => true
+    end
+  end
+  private :make_group_writable
 
   # Creates symlinks to sources in this folder.
   def install_symlink(*sources)
@@ -145,6 +159,7 @@ class Pathname
 
   def install_symlink_p(src, new_basename)
     mkpath
+    make_group_writable
     dstdir = realpath
     src = Pathname(src).expand_path(dstdir)
     src = src.dirname.realpath/src.basename if src.dirname.exist?
@@ -160,6 +175,7 @@ class Pathname
     raise "Will not overwrite #{self}" if exist?
 
     dirname.mkpath
+    make_group_writable(dirname)
     open("w", *open_args) { |f| f.write(content) }
   end
 
@@ -214,6 +230,7 @@ class Pathname
       dst = yield(self, dst) if block_given?
       FileUtils.cp(self, dst)
     end
+    make_group_writable(dst)
   end
 
   # @private
@@ -312,6 +329,7 @@ class Pathname
   # @private
   def make_relative_symlink(src)
     dirname.mkpath
+    make_group_writable(dirname)
     File.symlink(src.relative_path_from(dirname), self)
   end
 
@@ -345,6 +363,7 @@ class Pathname
       return
     end
     mkpath
+    make_group_writable
     targets.each do |target|
       target = Pathname.new(target) # allow pathnames or strings
       join(target.basename).write <<~SH
@@ -363,6 +382,7 @@ class Pathname
     env_export = +""
     env.each { |key, value| env_export << "#{key}=\"#{value}\" " }
     dirname.mkpath
+    make_group_writable(dirname)
     write <<~SH
       #!/bin/bash
       #{env_export}exec "#{target}" #{args} "$@"
@@ -372,6 +392,7 @@ class Pathname
   # Writes a wrapper env script and moves all files to the dst.
   def env_script_all_files(dst, env)
     dst.mkpath
+    make_group_writable(dst)
     Pathname.glob("#{self}/*") do |file|
       next if file.directory?
 
