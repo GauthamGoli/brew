@@ -1,6 +1,11 @@
 #!/bin/bash
 set +o posix
 
+# Force a sane umask for multi-user support
+if [[ -n "${HOMEBREW_MULTI_USER-}" ]]; then
+  umask 002
+fi
+
 # Fail fast with concise message when cwd does not exist
 if ! [[ -d "$PWD" ]]; then
   echo "Error: The current working directory doesn't exist, cannot proceed." >&2
