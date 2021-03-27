@@ -183,6 +183,7 @@ class Formula
 
   # @private
   def initialize(name, path, spec, alias_path: nil, force_bottle: false)
+    File.umask(0002)
     @name = name
     @path = path
     @alias_path = alias_path

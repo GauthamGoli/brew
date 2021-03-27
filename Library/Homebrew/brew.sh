@@ -3,6 +3,11 @@
 ##### able to `source` in shell configuration quick.
 #####
 
+# Force a sane umask for multi-user support
+if [[ -n "${HOMEBREW_MULTI_USER-}" ]]; then
+  umask 002
+fi
+
 HOMEBREW_PROCESSOR="$(uname -m)"
 HOMEBREW_SYSTEM="$(uname -s)"
 case "$HOMEBREW_SYSTEM" in
@@ -669,3 +674,5 @@ else
   [[ "$HOMEBREW_ARG_COUNT" -gt 0 ]] && set -- "$HOMEBREW_COMMAND" "$@"
   { update-preinstall "$@"; exec "$HOMEBREW_RUBY_PATH" $HOMEBREW_RUBY_WARNINGS "$RUBY_DISABLE_OPTIONS" "$HOMEBREW_LIBRARY/Homebrew/brew.rb" "$@"; }
 fi
+
+echo $(umask)

@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "fcntl"
+require "utils"
 
 # A lock file.
 #
@@ -42,8 +43,8 @@ class LockFile
   def create_lockfile
     return if @lockfile.present? && !@lockfile.closed?
 
-    @lockfile = @path.open(File::RDWR | File::CREAT)
-    @lockfile.chmod(0664) if Homebrew::EnvConfig.multi_user?
+    File.umask(0002)
+    @lockfile = @path.open(File::RDWR | File::CREAT, 0664)
     @lockfile.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
   end
 end

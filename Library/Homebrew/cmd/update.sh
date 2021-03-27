@@ -297,6 +297,15 @@ EOS
   trap - SIGINT
 }
 
+exists_but_not_group_writable() {
+  if [[ -n "${HOMEBREW_ON_LINUX-}" ]]; then
+    group_writable="2775"
+  else
+    group_writable="775"
+  fi
+  [[ -e "$1" ]] && [[ "$(get_permission "$1")" != "$group_writable" ]]
+}
+
 homebrew-update() {
   local option
   local DIR
