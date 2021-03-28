@@ -357,14 +357,21 @@ module Homebrew
         EOS
       end
 
+      def is_group_writable?(path)
+        stat = File.stat(path)
+        (state.mode & 0060) == 0060
+      end
+
       def check_access_directories
         not_writable_dirs =
           Keg::MUST_BE_WRITABLE_DIRECTORIES.select(&:exist?)
                                            .reject(&:writable_real?)
+        not_writable_dirs = not_writable_dirs.reject(&:is_group_writable?)
+
         return if not_writable_dirs.empty?
 
         <<~EOS
-          The following directories are not writable by your user:
+          The following directories are not writable by your user/group:
           #{not_writable_dirs.join("\n")}
 
           You should change the ownership of these directories to your user.
