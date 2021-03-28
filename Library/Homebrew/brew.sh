@@ -5,6 +5,7 @@
 
 # Force a sane umask for multi-user support
 if [[ -n "${HOMEBREW_MULTI_USER-}" ]]; then
+  echo "Setting UMASK as 0002"
   umask 002
 fi
 

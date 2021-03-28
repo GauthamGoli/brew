@@ -44,7 +44,13 @@ class LockFile
     return if @lockfile.present? && !@lockfile.closed?
 
     File.umask(0002)
-    @lockfile = @path.open(File::RDWR | File::CREAT, 0664)
+    if @lockfile.present?
+      puts "lock file already preset"
+      @lockfile = @path.open(File::RDWR | File::CREAT)
+    else
+      puts "creating lockfile"
+      @lockfile = @path.open(File::RDWR | File::CREAT, 0664)
+    end
     @lockfile.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
   end
 end
