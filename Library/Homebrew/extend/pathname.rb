@@ -90,6 +90,7 @@ class Pathname
     )).void
   }
   def install(*sources)
+    File.umask(0002)
     sources.each do |src|
       case src
       when Resource
@@ -116,6 +117,7 @@ class Pathname
 
   sig { params(src: T.any(String, Pathname), new_basename: String).void }
   def install_p(src, new_basename)
+    File.umask(0002)
     src = Pathname(src)
     raise Errno::ENOENT, src.to_s if !src.symlink? && !src.exist?
 
@@ -144,6 +146,7 @@ class Pathname
     ).void
   }
   def install_symlink(*sources)
+    File.umask(0002)
     sources.each do |src|
       case src
       when Array
@@ -157,6 +160,7 @@ class Pathname
   end
 
   def install_symlink_p(src, new_basename)
+    File.umask(0002)
     mkpath
     dstdir = realpath
     src = Pathname(src).expand_path(dstdir)
@@ -171,6 +175,7 @@ class Pathname
   # We assume this pathname object is a file, obviously.
   sig { params(content: String, offset: Integer, open_args: T::Hash[Symbol, T.untyped]).returns(Integer) }
   def write(content, offset = 0, open_args = {})
+    File.umask(0002)
     raise "Will not overwrite #{self}" if exist?
 
     dirname.mkpath
@@ -368,6 +373,7 @@ class Pathname
 
   # Writes an exec script in this folder for each target pathname.
   def write_exec_script(*targets)
+    File.umask(0002)
     targets.flatten!
     if targets.empty?
       opoo "Tried to write exec scripts to #{self} for an empty list of targets"
@@ -385,6 +391,7 @@ class Pathname
 
   # Writes an exec script that sets environment variables.
   def write_env_script(target, args, env = nil)
+    File.umask(0002)
     unless env
       env = args
       args = nil
@@ -400,6 +407,7 @@ class Pathname
 
   # Writes a wrapper env script and moves all files to the dst.
   def env_script_all_files(dst, env)
+    File.umask(0002)
     dst.mkpath
     Pathname.glob("#{self}/*") do |file|
       next if file.directory?
@@ -420,6 +428,7 @@ class Pathname
     ).returns(Integer)
   }
   def write_jar_script(target_jar, script_name, java_opts = "", java_version: nil)
+    File.umask(0002)
     (self/script_name).write <<~EOS
       #!/bin/bash
       export JAVA_HOME="#{Language::Java.overridable_java_home_env(java_version)[:JAVA_HOME]}"
@@ -428,6 +437,7 @@ class Pathname
   end
 
   def install_metafiles(from = Pathname.pwd)
+    File.umask(0002)
     Pathname(from).children.each do |p|
       next if p.directory?
       next if File.zero?(p)
@@ -462,6 +472,16 @@ class Pathname
   sig { returns(T::Boolean) }
   def dylib?
     false
+  end
+
+  def mkpath
+    File.umask(0002)
+    super
+  end
+
+  def mkdir_p
+    File.umask(0002)
+    super
   end
 end
 

@@ -246,6 +246,7 @@ class Tap
   # @param full_clone [Boolean] If set as true, full clone will be used. If unset/nil, means "no change".
   # @param quiet [Boolean] If set, suppress all output.
   def install(full_clone: true, quiet: false, clone_target: nil, force_auto_update: nil)
+    File.umask(0002)
     require "descriptions"
     require "readall"
 

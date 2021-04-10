@@ -66,6 +66,7 @@ module Homebrew
     private_class_method :check_cpu
 
     def attempt_directory_creation
+      File.umask(0002)
       Keg::MUST_EXIST_DIRECTORIES.each do |dir|
         FileUtils.mkdir_p(dir) unless dir.exist?
 
