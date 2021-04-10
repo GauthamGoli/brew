@@ -473,16 +473,6 @@ class Pathname
   def dylib?
     false
   end
-
-  def mkpath
-    File.umask(0002)
-    super
-  end
-
-  def mkdir_p
-    File.umask(0002)
-    super
-  end
 end
 
 require "extend/os/pathname"
