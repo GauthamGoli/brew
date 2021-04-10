@@ -44,7 +44,7 @@ module Homebrew
       puts "#{cmd} #{args * " "}".gsub(RUBY_PATH, "ruby")
                                  .gsub($LOAD_PATH.join(File::PATH_SEPARATOR).to_s, "$LOAD_PATH")
     end
-    _system("umask 002 && "+cmd, *args, **options)
+    _system(cmd, *args, **options)
   end
 
   # rubocop:disable Style/GlobalVars
