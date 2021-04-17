@@ -13,25 +13,25 @@
 __brew_list_aliases() {
   local -a aliases
   aliases=(
-    ls list
-    homepage home
-    '-S' search
-    up update
-    ln link
-    instal install
-    uninstal uninstall
-    rm uninstall
-    remove uninstall
-    configure diy
-    abv info
-    dr doctor
-    '--repo' '--repository'
-    environment '--env'
-    '--config' config
-    '-v' '--version'
-    tc typecheck
+    [ls]=list
+    [homepage]=home
+    ['-S']=search
+    [up]=update
+    [ln]=link
+    [instal]=install
+    [uninstal]=uninstall
+    [rm]=uninstall
+    [remove]=uninstall
+    [configure]=diy
+    [abv]=info
+    [dr]=doctor
+    ['--repo']='--repository'
+    [environment]='--env'
+    ['--config']=config
+    ['-v']='--version'
+    [tc]=typecheck
   )
-  echo "${aliases}"
+  echo "${aliases[@]}"
 }
 
 __brew_formulae_or_ruby_files() {
@@ -47,7 +47,9 @@ __brew_completion_caching_policy() {
   (( $#tmp )) || return 0
 
   # otherwise, invalidate if latest tap index file is missing or newer than cache file
-  tmp=( $(brew --repository)/Library/Taps/*/*/.git/index(om[1]N) )
+  # shellcheck disable=SC1036
+  tmp=( "$(brew --repository)"/Library/Taps/*/*/.git/index(om[1]N) )
+  # shellcheck disable=SC2128
   [[ -z $tmp || $tmp -nt $1 ]]
 }
 
@@ -57,7 +59,7 @@ __brew_formulae() {
   local -a list
   local comp_cachename=brew_formulae
   if ! _retrieve_cache $comp_cachename; then
-    list=( $(brew formulae) )
+    brew formulae | while IFS="" read -r formula; do formulae+=("$formula"); done
     _store_cache $comp_cachename list
   fi
   _describe -t formulae 'all formulae' list
@@ -67,7 +69,7 @@ __brew_installed_formulae() {
   [[ -prefix '-' ]] && return 0
 
   local -a formulae
-  formulae=($(brew list --formula))
+  brew list --formulae | while IFS="" read -r line; do formulae+=("$line"); done
   _describe -t formulae 'installed formulae' formulae
 }
 
@@ -75,7 +77,7 @@ __brew_outdated_formulae() {
   [[ -prefix '-' ]] && return 0
 
   local -a formulae
-  formulae=($(brew outdated --formula))
+  brew outdated --formula | while IFS="" read -r line; do formulae+=("$line"); done
   _describe -t formulae 'outdated formulae' formulae
 }
 
@@ -87,7 +89,7 @@ __brew_casks() {
   local comp_cachename=brew_casks
 
   if ! _retrieve_cache $comp_cachename; then
-    list=( $(brew casks) )
+    brew casks | while IFS="" read -r line; do list+=("$line"); done
     _store_cache $comp_cachename list
   fi
 
@@ -99,7 +101,7 @@ __brew_installed_casks() {
 
   local -a list
   local expl
-  list=( $(brew list --cask) )
+  brew list --cask | while IFS="" read -r line; do list+=("$line"); done
   _wanted list expl 'installed casks' compadd -a list
 }
 
@@ -107,7 +109,7 @@ __brew_outdated_casks() {
   [[ -prefix '-' ]] && return 0
 
   local -a casks
-  casks=($(brew outdated --cask))
+  brew outdated --cask | while IFS="" read -r line; do casks+=("$line"); done
   _describe -t casks 'outdated casks' casks
 }
 
@@ -115,7 +117,7 @@ __brew_installed_taps() {
   [[ -prefix '-' ]] && return 0
 
   local -a taps
-  taps=($(brew tap))
+  brew tap | while IFS="" read -r line; do taps+=("$line"); done
   _describe -t installed-taps 'installed taps' taps
 }
 
@@ -128,6 +130,8 @@ __brew_any_tap() {
 
 __brew_internal_commands() {
   local -a commands
+  # shellcheck disable=SC2034 # False positive
+  # shellcheck disable=SC2016
   commands=(
     '--cache:Display Homebrew'\''s download cache'
     '--caskroom:Display Homebrew'\''s Caskroom path'
@@ -229,9 +233,11 @@ __brew_external_commands() {
   local -a list
   local comp_cachename=brew_all_commands
   if ! _retrieve_cache $comp_cachename; then
-    local cache_dir=$(brew --cache)
+    local cache_dir
+    cache_dir=$(brew --cache)
     [[ -f $cache_dir/external_commands_list.txt ]] &&
-      list=( $(<$cache_dir/external_commands_list.txt) )
+      #while IFS='' read -r line; do list+=("$line"); done < <("$cache_dir"/external_commands_list.txt)
+      while IFS="" read -r line; do list+=("$line"); done < "$cache_dir"/external_commands_list.txt
     _store_cache $comp_cachename list
   fi
   _describe -t all-commands 'all commands' list
@@ -245,7 +251,7 @@ __brew_commands() {
 
 __brew_diagnostic_checks() {
   local -a diagnostic_checks
-  diagnostic_checks=($(brew doctor --list-checks))
+  brew doctor --list-checks | while IFS="" read -r line; do diagnostic_checks+=("$line"); done
   _describe -t diagnostic-checks 'diagnostic checks' diagnostic_checks
 }
 
@@ -299,6 +305,7 @@ _brew___config() {
 
 # brew --env
 _brew___env() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '--help[Show this message]' \
@@ -368,6 +375,7 @@ _brew__s() {
 
 # brew abv
 _brew_abv() {
+  # shellcheck disable=SC2016
   _arguments \
     '(--installed)--all[Print JSON of all available formulae]' \
     '--analytics[List global Homebrew analytics data or, if specified, installation and build error data for formula (provided neither `HOMEBREW_NO_ANALYTICS` nor `HOMEBREW_NO_GITHUB_API` are set)]' \
@@ -401,6 +409,7 @@ _brew_analytics() {
 
 # brew audit
 _brew_audit() {
+  # shellcheck disable=SC2016
   _arguments \
     '--appcast[Audit the appcast]' \
     '--audit-debug[Enable debugging and profiling of audit methods]' \
@@ -444,6 +453,7 @@ _brew_autoremove() {
 
 # brew bottle
 _brew_bottle() {
+  # shellcheck disable=SC2016
   _arguments \
     '--committer[Specify a committer name and email in `git`'\''s standard author format]' \
     '--debug[Display any debugging information]' \
@@ -486,6 +496,7 @@ _brew_bump() {
 
 # brew bump-cask-pr
 _brew_bump_cask_pr() {
+  # shellcheck disable=SC2016
   _arguments \
     '--commit[When passed with `--write`, generate a new commit after writing changes to the cask file]' \
     '--debug[Display any debugging information]' \
@@ -510,6 +521,7 @@ _brew_bump_cask_pr() {
 
 # brew bump-formula-pr
 _brew_bump_formula_pr() {
+  # shellcheck disable=SC2016
   _arguments \
     '--commit[When passed with `--write`, generate a new commit after writing changes to the formula file]' \
     '--debug[Display any debugging information]' \
@@ -581,6 +593,7 @@ _brew_cat() {
 
 # brew cleanup
 _brew_cleanup() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '--dry-run[Show what would be removed, but do not actually remove anything]' \
@@ -639,6 +652,7 @@ _brew_config() {
 
 # brew create
 _brew_create() {
+  # shellcheck disable=SC2016
   _arguments \
     '(--cask)--HEAD[Indicate that URL points to the package'\''s repository rather than a file]' \
     '(--cmake --crystal --go --meson --node --perl --python --ruby --rust --cask)--autotools[Create a basic template for an Autotools-style build]' \
@@ -666,6 +680,7 @@ _brew_create() {
 
 # brew deps
 _brew_deps() {
+  # shellcheck disable=SC2016
   _arguments \
     '--1[Only show dependencies one level down, instead of recursing]' \
     '(--installed)--all[List dependencies for all available formulae]' \
@@ -709,6 +724,7 @@ _brew_desc() {
 
 # brew dispatch-build-bottle
 _brew_dispatch_build_bottle() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '--help[Show this message]' \
@@ -767,6 +783,7 @@ _brew_edit() {
 
 # brew environment
 _brew_environment() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '--help[Show this message]' \
@@ -874,6 +891,7 @@ _brew_homepage() {
 
 # brew info
 _brew_info() {
+  # shellcheck disable=SC2016
   _arguments \
     '(--installed)--all[Print JSON of all available formulae]' \
     '--analytics[List global Homebrew analytics data or, if specified, installation and build error data for formula (provided neither `HOMEBREW_NO_ANALYTICS` nor `HOMEBREW_NO_GITHUB_API` are set)]' \
@@ -896,6 +914,7 @@ _brew_info() {
 
 # brew instal
 _brew_instal() {
+  # shellcheck disable=SC2016
   _arguments \
     '(--cask)--HEAD[If formula defines it, install the HEAD version, aka. master, trunk, unstable]' \
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
@@ -948,6 +967,7 @@ _brew_instal() {
 
 # brew install
 _brew_install() {
+  # shellcheck disable=SC2016
   _arguments \
     '(--cask)--HEAD[If formula defines it, install the HEAD version, aka. master, trunk, unstable]' \
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
@@ -1009,6 +1029,7 @@ _brew_install_bundler_gems() {
 
 # brew irb
 _brew_irb() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '--examples[Show several examples]' \
@@ -1029,6 +1050,7 @@ _brew_leaves() {
 
 # brew link
 _brew_link() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '--dry-run[List files which would be linked or deleted by `brew link --overwrite` without actually linking or deleting any files]' \
@@ -1043,6 +1065,7 @@ _brew_link() {
 
 # brew linkage
 _brew_linkage() {
+  # shellcheck disable=SC2016
   _arguments \
     '--cached[Print the cached linkage values stored in `HOMEBREW_CACHE`, set by a previous `brew linkage` run]' \
     '--debug[Display any debugging information]' \
@@ -1057,6 +1080,7 @@ _brew_linkage() {
 
 # brew list
 _brew_list() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '(--versions --unbrewed --pinned --l --r --t)--full-name[Print formulae with fully-qualified names. Unless `--full-name`, `--versions` or `--pinned` are passed, other options (i.e. `-1`, `-l`, `-r` and `-t`) are passed to `ls`(1) which produces the actual output]' \
@@ -1080,6 +1104,7 @@ _brew_list() {
 
 # brew livecheck
 _brew_livecheck() {
+  # shellcheck disable=SC2016
   _arguments \
     '(--tap --installed)--all[Check all available formulae/casks]' \
     '(--json)--debug[Display any debugging information]' \
@@ -1101,6 +1126,7 @@ _brew_livecheck() {
 
 # brew ln
 _brew_ln() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '--dry-run[List files which would be linked or deleted by `brew link --overwrite` without actually linking or deleting any files]' \
@@ -1131,6 +1157,7 @@ _brew_log() {
 
 # brew ls
 _brew_ls() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '(--versions --unbrewed --pinned --l --r --t)--full-name[Print formulae with fully-qualified names. Unless `--full-name`, `--versions` or `--pinned` are passed, other options (i.e. `-1`, `-l`, `-r` and `-t`) are passed to `ls`(1) which produces the actual output]' \
@@ -1176,6 +1203,7 @@ _brew_migrate() {
 
 # brew mirror
 _brew_mirror() {
+  # shellcheck disable=SC2016
   _arguments \
     '--bintray-org[Upload to the specified Bintray organisation (default: `homebrew`)]' \
     '--bintray-repo[Upload to the specified Bintray repository (default: `mirror`)]' \
@@ -1217,6 +1245,7 @@ _brew_options() {
 
 # brew outdated
 _brew_outdated() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '--fetch-HEAD[Fetch the upstream repository to detect if the HEAD installation of the formula is outdated. Otherwise, the repository'\''s HEAD will only be checked for updates when a new stable or development version has been released]' \
@@ -1257,6 +1286,7 @@ _brew_postinstall() {
 
 # brew pr-automerge
 _brew_pr_automerge() {
+  # shellcheck disable=SC2016
   _arguments \
     '--autosquash[Instruct `brew pr-publish` to automatically reformat and reword commits in the pull request to our preferred format]' \
     '--debug[Display any debugging information]' \
@@ -1273,6 +1303,7 @@ _brew_pr_automerge() {
 
 # brew pr-publish
 _brew_pr_publish() {
+  # shellcheck disable=SC2016
   _arguments \
     '--autosquash[If supported on the target tap, automatically reformat and reword commits in the pull request to our preferred format]' \
     '--debug[Display any debugging information]' \
@@ -1286,6 +1317,7 @@ _brew_pr_publish() {
 
 # brew pr-pull
 _brew_pr_pull() {
+  # shellcheck disable=SC2016
   _arguments \
     '(--bintray-org)--archive-item[Upload to the specified Internet Archive item (default: `homebrew`)]' \
     '--artifact[Download artifacts with the specified name (default: `bottles`)]' \
@@ -1315,6 +1347,7 @@ _brew_pr_pull() {
 
 # brew pr-upload
 _brew_pr_upload() {
+  # shellcheck disable=SC2016
   _arguments \
     '--archive-item[Upload to the specified Internet Archive item (default: `homebrew`)]' \
     '--bintray-org[Upload to the specified Bintray organisation (default: `homebrew`)]' \
@@ -1334,6 +1367,7 @@ _brew_pr_upload() {
 
 # brew prof
 _brew_prof() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '--help[Show this message]' \
@@ -1346,6 +1380,7 @@ _brew_prof() {
 
 # brew readall
 _brew_readall() {
+  # shellcheck disable=SC2016
   _arguments \
     '--aliases[Verify any alias symlinks in each tap]' \
     '--debug[Display any debugging information]' \
@@ -1359,6 +1394,7 @@ _brew_readall() {
 
 # brew reinstall
 _brew_reinstall() {
+  # shellcheck disable=SC2016
   _arguments \
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
@@ -1458,6 +1494,7 @@ _brew_rm() {
 
 # brew ruby
 _brew_ruby() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '--help[Show this message]' \
@@ -1492,6 +1529,7 @@ _brew_search() {
 
 # brew sh
 _brew_sh() {
+  # shellcheck disable=SC2016
   _arguments \
     '--cmd[Execute commands in a non-interactive shell]' \
     '--debug[Display any debugging information]' \
@@ -1538,6 +1576,7 @@ _brew_style() {
 
 # brew tap
 _brew_tap() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '--force-auto-update[Auto-update tap even if it is not hosted on GitHub. By default, only taps hosted on GitHub are auto-updated (for performance reasons)]' \
@@ -1554,6 +1593,7 @@ _brew_tap() {
 
 # brew tap-info
 _brew_tap_info() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '--help[Show this message]' \
@@ -1567,6 +1607,7 @@ _brew_tap_info() {
 
 # brew tap-new
 _brew_tap_new() {
+  # shellcheck disable=SC2016
   _arguments \
     '--branch[Initialize Git repository and setup GitHub Actions workflows with the specified branch name (default: `main`)]' \
     '--debug[Display any debugging information]' \
@@ -1581,6 +1622,7 @@ _brew_tap_new() {
 
 # brew tc
 _brew_tc() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '(--file)--dir[Typecheck all files in a specific directory]' \
@@ -1612,6 +1654,7 @@ _brew_test() {
 
 # brew tests
 _brew_tests() {
+  # shellcheck disable=SC2016
   _arguments \
     '--byebug[Enable debugging using byebug]' \
     '--coverage[Generate code coverage reports]' \
@@ -1628,6 +1671,7 @@ _brew_tests() {
 
 # brew typecheck
 _brew_typecheck() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '(--file)--dir[Typecheck all files in a specific directory]' \
@@ -1644,6 +1688,7 @@ _brew_typecheck() {
 
 # brew unbottled
 _brew_unbottled() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display any debugging information]' \
     '(--total)--dependents[Skip getting analytics data and sort by number of dependents instead]' \
@@ -1744,6 +1789,7 @@ _brew_untap() {
 
 # brew up
 _brew_up() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display a trace of all shell commands as they are executed]' \
     '--force[Always do a slower, full update check (even if unnecessary)]' \
@@ -1755,6 +1801,7 @@ _brew_up() {
 
 # brew update
 _brew_update() {
+  # shellcheck disable=SC2016
   _arguments \
     '--debug[Display a trace of all shell commands as they are executed]' \
     '--force[Always do a slower, full update check (even if unnecessary)]' \
@@ -1814,6 +1861,7 @@ _brew_update_report() {
 
 # brew update-test
 _brew_update_test() {
+  # shellcheck disable=SC2016
   _arguments \
     '--before[Use the commit at the specified date as the start commit]' \
     '--commit[Use the specified commit as the start commit]' \
@@ -1827,6 +1875,7 @@ _brew_update_test() {
 
 # brew upgrade
 _brew_upgrade() {
+  # shellcheck disable=SC2016
   _arguments \
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
@@ -1873,6 +1922,7 @@ _brew_upgrade() {
 
 # brew uses
 _brew_uses() {
+  # shellcheck disable=SC2016
   _arguments \
     '(--formula)--cask[Include only casks]' \
     '--debug[Display any debugging information]' \
@@ -1902,7 +1952,7 @@ _brew_vendor_gems() {
 
 # The main completion function
 _brew() {
-  local curcontext="$curcontext" state state_descr line expl
+  local curcontext="$curcontext" state line
   local tmp ret=1
 
   _arguments -C : \
@@ -1926,7 +1976,7 @@ _brew() {
 
       # expand alias e.g. ls -> list
       command_or_alias="${line[1]}"
-      aliases=($(__brew_list_aliases))
+      aliases=$(__brew_list_aliases)
       command="${aliases[$command_or_alias]:-$command_or_alias}"
 
       # change context to e.g. brew-list
